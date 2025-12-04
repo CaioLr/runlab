@@ -1,0 +1,15 @@
+{
+  "name": "runlab",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "exports": {
+    "./dist/index.js": "./dist/index.js",
+    "./dist/runlab.wasm": "./dist/runlab.wasm",
+    "./dist/wasm_exec.js": "./dist/wasm_exec.js"
+  },
+  "files": [
+    "dist/**/*",
+    "LICENSE"
+  ]
+}
