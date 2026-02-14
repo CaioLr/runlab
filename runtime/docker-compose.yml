@@ -1,0 +1,12 @@
+services:
+  runtime:
+    build: .
+    image: runlab-runtime
+    container_name: runlab-runtime
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 0.5
+    stdin_open: true
+    tty: true

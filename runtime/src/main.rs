@@ -1,7 +1,10 @@
 use axum::http::Method;
 use axum::{Json, Router, routing::post};
 use serde::{Deserialize, Serialize};
-use std::{fs, process::Command};
+use std::fs;
+use std::io::Write;
+use tokio::process::Command;
+use tokio::time::{timeout, Duration};
 use tower_http::cors::{Any, CorsLayer};
 use uuid::Uuid;
 
@@ -18,22 +21,24 @@ struct RunResponse {
     success: bool,
 }
 
-fn detect_python() -> Option<String> {
-
-    if Command::new("python")
-        .arg("--version")
-        .output()
-        .is_ok()
-    {
-        return Some("python".to_string());
-    }
+async fn detect_python() -> Option<String> {
 
     if Command::new("python3")
         .arg("--version")
         .output()
+        .await
         .is_ok()
     {
         return Some("python3".to_string());
+    }
+
+    if Command::new("python")
+        .arg("--version")
+        .output()
+        .await
+        .is_ok()
+    {
+        return Some("python".to_string());
     }
 
 
@@ -54,14 +59,14 @@ async fn run_code(Json(payload): Json<RunRequest>) -> Json<RunResponse> {
         });
     }
 
-    let python_cmd = detect_python();   
+    let python_cmd = detect_python().await;
 
-    let output = match payload.ext.as_str() {
-        "js" => Command::new("node").arg(&filename).output(),
-        "ts" => Command::new("ts-node").arg(&filename).output(),
+    let mut cmd = match payload.ext.as_str() {
+        "js" => Command::new("node"),
+        "ts" => Command::new("ts-node"),
         "py" => {
             if let Some(py) = python_cmd {
-                Command::new(py).arg(&filename).output()
+                Command::new(py)
             } else {
                 return Json(RunResponse {
                     stdout: "".into(),
@@ -78,6 +83,22 @@ async fn run_code(Json(payload): Json<RunRequest>) -> Json<RunResponse> {
             });
         }
     };
+
+    cmd.arg(&filename);
+
+    let timed = timeout(Duration::from_secs(5), cmd.output()).await;
+
+    let output = match timed {
+        Ok(res) => res,
+        Err(_) => {
+            return Json(RunResponse {
+                stdout: "".into(),
+                stderr: "Execution timed out".into(),
+                success: false,
+            })
+        }
+    };
+
     match output {
         Ok(out) => Json(RunResponse {
             stdout: String::from_utf8_lossy(&out.stdout).to_string(),
@@ -95,12 +116,38 @@ async fn run_code(Json(payload): Json<RunRequest>) -> Json<RunResponse> {
 
 #[tokio::main]
 async fn main() {
+    eprintln!("[STARTUP] Starting runtime server...");
+    
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods([Method::POST, Method::OPTIONS])
         .allow_headers(Any);
     let app = Router::new().route("/", post(run_code)).layer(cors);
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    println!("🚀 Server running at http://localhost:3000");
-    axum::serve(listener, app).await.unwrap();
+    
+    let addr = "0.0.0.0:8080";
+    eprintln!("[STARTUP] Binding to {}", addr);
+    let listener = match tokio::net::TcpListener::bind(addr).await {
+        Ok(l) => {
+            eprintln!("[STARTUP] Successfully bound to {}", addr);
+            l
+        }
+        Err(e) => {
+            eprintln!("[ERROR] Failed to bind to {}: {}", addr, e);
+            std::process::exit(1);
+        }
+    };
+    
+    eprintln!("[STARTUP] 🚀 Server running on http://0.0.0.0:8080");
+    let _ = std::io::stderr().flush();
+    
+    match axum::serve(listener, app).await {
+        Ok(_) => {
+            eprintln!("[ERROR] Server exited normally (this should not happen)");
+            std::process::exit(1);
+        }
+        Err(e) => {
+            eprintln!("[ERROR] Server error: {}", e);
+            std::process::exit(1);
+        }
+    }
 }
