@@ -1,27 +1,49 @@
-import "./wasm/wasm_exec.js";
-import wasmUrl from "./wasm/runlab.wasm?url";
 import { generateContainer } from "./app/app.js";
+import { appendViewContent } from "./app/app.js";
 
-const go = new Go();
+let runtimeUrl = "";
+function setRuntimeUrl(url) {
+  runtimeUrl = url;
+}
+function getRuntimeUrl() {
+  return runtimeUrl;
+}
 
-export async function run(parentId, width = 1200, height = 800) {
-  console.log("WASM URL resolvido:", wasmUrl);
-  const response = await fetch(wasmUrl);
-  const bytes = await response.arrayBuffer();
-
-  const result = await WebAssembly.instantiate(bytes, go.importObject);
+export async function run({
+  parentId,
+  width = 1200,
+  height = 800,
+  runtimeUrl = ""
+}) {
   generateContainer(parentId, width, height);
-  go.run(result.instance);
+  setRuntimeUrl(runtimeUrl);
 }
 
-async function updateFileExplorer() {
- 
-}
+export async function sendCode(code, ext = "txt") {
 
-async function loadTerminal() {
+  const runnableExtensions = ["js", "ts", "py"];
+  if (!runnableExtensions.includes(ext)) {
+    appendViewContent(code);
+    return;
+  }
 
-}
+  try {
+    const response = await fetch(getRuntimeUrl(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ code, ext })
+    });
 
-async function loadEditor() {
+    if (!response.ok) {
+      throw new Error("Failed to send code");
+    }
 
+    const data = await response.json();
+
+    appendViewContent(data.stdout || data.stderr);
+  } catch (err) {
+    console.error(err);
+  }
 }

@@ -5,6 +5,7 @@ class Folder extends FSNode {
         super(name);
         this.parent = parent;
         this.children = [];
+        this.path = parent ? [...parent.path, name] : [name];
     }
 }
 

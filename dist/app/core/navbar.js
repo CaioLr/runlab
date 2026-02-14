@@ -1,4 +1,7 @@
-
+import { sendCode } from "../../index.js";
+import { setViewActive } from "../app.js";
+import { getCurrentCode, getCurrentExtension } from "./editor.js";
+import Swal from "sweetalert2";
 
 export function createNavbar(parentId) {
     const navbar = document.createElement("nav");
@@ -8,28 +11,144 @@ export function createNavbar(parentId) {
       height: "100%"
     });
 
+    // ========== Menu Items ==========
+
     const ul = document.createElement("ul");
     Object.assign(ul.style, {
         listStyleType: "none",
         margin: "0",
         padding: "0",
-        display: "flex"
+        display: "flex",
+        alignItems: "center",
+        width: "100%"
     });
     navbar.appendChild(ul);
 
-    const menuItems = ["File", "Edit", "View", "Help"];
+
+    // ========== Left Menu Items ==========
+
+    const leftGroup = document.createElement("div");
+    Object.assign(leftGroup.style, {
+        display: "flex",
+        alignItems: "center"
+    });
+    ul.appendChild(leftGroup);
+
+    const menuItems = ["Run", "Help"];
     menuItems.forEach(item => {
-      const li = document.createElement("li"); 
+        const li = document.createElement("li");
         li.textContent = item;
-        ul.appendChild(li);
+
         Object.assign(li.style, {
-            marginRight: "20px",
+            marginRight: "15px",
+            marginLeft: "15px",
             padding: "10px 14px",
             cursor: "pointer",
-            color: "#fff",
-            textDecoration: "none"
+            color: "#fff"
+        });
+        if (item === "Run") {
+            li.addEventListener("click", () => {
+                sendCode(getCurrentCode(),getCurrentExtension());
+                setViewActive(true);
+            });
+        }
+        if (item === "Help") {
+            li.addEventListener("click", () => {
+                Swal.fire({
+                    title: "RunLab Help",
+                    html: `
+                    <p>RunLab is a web-based code editor and runtime environment.</p>
+                    <p>Here's how to use it:</p>
+                    <ul style="text-align: left;">
+                        <li><strong>File Explorer:</strong> Use the file explorer to create, open, and manage your project files. Start it by right clicking on the left container.</li>
+                        <li><strong>Editor:</strong> Write your code in the editor pane. It supports multiple file types. To use it you should click on a file.</li>
+                        <li><strong>View:</strong> After writing your code, click the "Run" button in the navbar to execute it. The output will be displayed in the view pane.</li>
+                        <li><strong>Terminal:</strong> You can run terminal commands in the terminal pane.</li>
+                    </ul>
+                    <p>Available terminal commands:</p>
+                    <ul style="text-align: left;">
+                        <li><span style="font-weight: bold;">ls</span>: List directory contents</li>
+                        <li><span style="font-weight: bold;">cd</span>: Change directory</li>
+                        <li><span style="font-weight: bold;">clear</span>: Clear the terminal</li>
+                        <li><span style="font-weight: bold;">pwd</span>: Print current directory</li>
+                        <li><span style="font-weight: bold;">run</span>: Run a file (e.g., run script.js)</li>
+                        <li><span style="font-weight: bold;">help | h</span>: Show help message</li>
+                    </ul>
+                    `,
+                    width: 700,
+                    confirmButtonText: "Got it!"
+                            })
+            });
+        }
+
+        leftGroup.appendChild(li);
+    });
+
+    // ========== Append navbar ==========
+
+    document.getElementById(parentId).appendChild(navbar);
+
+    // ========== ActiveFile Name ==========
+    const activeFileName = document.createElement("li");
+    activeFileName.id = "runlab-navbar-active-file-name";
+
+    Object.assign(activeFileName.style, {
+        margin: "0 auto",
+        padding: "10px 14px",
+        fontWeight: "600",
+        color: "#FFDE21",
+        whiteSpace: "nowrap"
+    });
+
+    ul.appendChild(activeFileName);
+    // ========== Editor/View Toggle ==========
+        
+    const toggleLi = document.createElement("li");
+    Object.assign(toggleLi.style, {
+        
+        padding: "4px 10px"
+    });
+
+    const toggle = document.createElement("div");
+    Object.assign(toggle.style, {
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        width: "180px",
+        height: "28px",
+        border: "2px solid #09090b",
+        borderRadius: "8px",
+        overflow: "hidden",
+        background: "#e5e7eb",
+        fontFamily: "sans-serif",
+        marginLeft: "20px"
+    });
+
+    const editorBtn = document.createElement("button");
+    editorBtn.id = "runlab-editor-btn";
+    editorBtn.textContent = "Editor";
+    editorBtn.classList.add("active");
+
+    const viewBtn = document.createElement("button");
+    viewBtn.id = "runlab-view-btn";
+    viewBtn.textContent = "View";
+
+    [editorBtn, viewBtn].forEach(btn => {
+        Object.assign(btn.style, {
+            border: "none",
+            cursor: "pointer",
+            fontWeight: "500",
+            transition: "0.2s",
+            color: "#000"
         });
     });
 
-    document.getElementById(parentId).appendChild(navbar);
+    toggle.append(editorBtn, viewBtn);
+    toggleLi.appendChild(toggle);
+    ul.appendChild(toggleLi);
+
+    //Initialize with editor active
+    setViewActive(false);
+
+    editorBtn.onclick = () => setViewActive(false);
+    viewBtn.onclick   = () => setViewActive(true);
 }

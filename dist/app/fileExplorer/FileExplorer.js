@@ -2,13 +2,44 @@ import { Folder } from "./Folder.js";
 import { File } from "./File.js";
 import { updateEditorContentById, setActiveFile } from "../core/editor.js";
 import Swal from "sweetalert2";
+import { setEditorActive, setViewActive } from "../app.js";
 
 export class FileExplorer {
     constructor(parentId) {
         this.container = document.getElementById(parentId);
         this.root = new Folder("root", null);
-
+        this.execFiles = [];
+        this.filesPath = [];
+        this.path = [];
         this.render();
+    }
+
+    getRoot() {
+        return this.root;
+    }
+
+    getFileNode(file) {
+        const name = file.name.split(".")[0];
+        const ext = file.name.split(".")[1];
+        const path = file.path;
+        let currentNode = this.root;
+
+        for (let i = 1; i < path.length; i++) {
+            const part = path[i];
+            const nextNode = currentNode.children.find(c => c.name === part && !c.ext);
+            if (!nextNode) return null;
+            currentNode = nextNode;
+        }
+
+        return currentNode.children.find(c => c.name === name && c.ext === ext);
+    }
+
+    getExecutables() {
+        return this.execFiles;
+    }
+
+    setExecutables(files) {
+        this.execFiles = files;
     }
 
     /* =========================
@@ -50,12 +81,17 @@ export class FileExplorer {
                 btn.style.paddingBottom = "8px";
                 btn.style.cursor = "pointer";
                 
+                
 
                 btn.onmouseover = () => btn.style.backgroundColor = "#555";
                 btn.onmouseout = () => btn.style.backgroundColor = "transparent";
 
                 const ul = document.createElement("ul"); 
                 ul.style.display = "none";
+                ul.style.listStyle = "none";
+                ul.style.margin = "0";
+                ul.style.padding = "0 0 0 24px";
+
 
                 btn.onclick = () => this.toggle(ul);
                 btn.oncontextmenu = e => {
@@ -79,9 +115,12 @@ export class FileExplorer {
                 li.style.paddingTop = "8px";
                 li.style.paddingBottom = "8px";
                 li.style.cursor = "pointer";
+                
 
                 li.onclick = () => {
                     setActiveFile(node);
+                    setViewActive(false);
+                    setEditorActive(true);
                     updateEditorContentById("runlab-editor", node.content);
                 };
 
@@ -92,8 +131,12 @@ export class FileExplorer {
                 };
 
                 parentUl.appendChild(li);
+                this.filesPath.push({ name: `${node.name}.${node.ext}`, path: node.parent.path });
+
             }
         });
+
+        this.setExecutables(this.filesPath);
     }
 
     toggle(el) {
@@ -138,6 +181,7 @@ export class FileExplorer {
                     input: 'text',
                     showCancelButton: true,
                     confirmButtonText: 'Create',
+                    draggable: true,
                     preConfirm: (name) => {
                         if (name) {
                             this.addFolder(this.root, name);
@@ -151,20 +195,21 @@ export class FileExplorer {
                     title: 'Choose extension and filename',
                     html:
                         '<select id="swal-select" class="swal2-input">' +
-                            '<option value="txt">.txt - Text</option>' +
-                            '<option value="md">.md - Text</option>' +
-                            '<option value="json">.json - Data</option>' +
-                            '<option value="yaml">.yaml - Data</option>' +
-                            '<option value="toml">.toml - Data</option>' +
-                            '<option value="html">.html - Markup</option>' +
-                            '<option value="xml">.xml - Markup</option>' +
-                            '<option value="css">.css - Style</option>' +
-                            '<option value="js">.js - JavaScript</option>' +
-                            '<option value="ts">.ts - TypeScript</option>' +
-                            '<option value="go">.go - GO</option>' +
+                            '<option value="txt">📄 .txt - Text</option>' +
+                            '<option value="md">📝 .md - Text</option>' +
+                            '<option value="json">🧩 .json - Data</option>' +
+                            '<option value="yaml">🧩 .yaml - Data</option>' +
+                            '<option value="toml">🧩 .toml - Data</option>' +
+                            '<option value="html">🌐 .html - Markup</option>' +
+                            '<option value="xml">🌐 .xml - Markup</option>' +
+                            '<option value="css">🎨 .css - Style</option>' +
+                            '<option value="js">🟨 .js - JavaScript</option>' +
+                            '<option value="ts">🟦 .ts - TypeScript</option>' +
+                            '<option value="py">🐍 .py - Python</option>' +
                         '</select>' +
                         '<input id="swal-input" class="swal2-input" placeholder="filename">',
                     focusConfirm: false,
+                    draggable: true,
                     preConfirm: () => {
                         return [
                         document.getElementById('swal-select').value,
@@ -177,10 +222,21 @@ export class FileExplorer {
                         this.addFile(this.root, text, selection);
                     }
                 })
-            }
+            }   
         ]);
 
         this.openMenu(e, menu);
+
+        const closeMenu = () => {
+            menu.remove();
+            document.removeEventListener("click", closeMenu);
+            document.removeEventListener("contextmenu", closeMenu);
+        };
+
+        setTimeout(() => {
+            document.addEventListener("click", closeMenu);
+            document.addEventListener("contextmenu", closeMenu);
+        });
     }
 
     showFolderMenu(e, folder) {
@@ -190,6 +246,7 @@ export class FileExplorer {
                     input: 'text',
                     showCancelButton: true,
                     confirmButtonText: 'Create',
+                    draggable: true,
                     preConfirm: (name) => {
                         if (name) {
                             this.addFolder(folder, name);
@@ -200,20 +257,21 @@ export class FileExplorer {
                     title: 'Choose extension and filename',
                     html:
                         '<select id="swal-select" class="swal2-input">' +
-                            '<option value="txt">.txt - Text</option>' +
-                            '<option value="md">.md - Text</option>' +
-                            '<option value="json">.json - Data</option>' +
-                            '<option value="yaml">.yaml - Data</option>' +
-                            '<option value="toml">.toml - Data</option>' +
-                            '<option value="html">.html - Markup</option>' +
-                            '<option value="xml">.xml - Markup</option>' +
-                            '<option value="css">.css - Style</option>' +
-                            '<option value="js">.js - JavaScript</option>' +
-                            '<option value="ts">.ts - TypeScript</option>' +
-                            '<option value="go">.go - GO</option>' +
+                            '<option value="txt">📄 .txt - Text</option>' +
+                            '<option value="md">📝 .md - Text</option>' +
+                            '<option value="json">🧩 .json - Data</option>' +
+                            '<option value="yaml">🧩 .yaml - Data</option>' +
+                            '<option value="toml">🧩 .toml - Data</option>' +
+                            '<option value="html">🌐 .html - Markup</option>' +
+                            '<option value="xml">🌐 .xml - Markup</option>' +
+                            '<option value="css">🎨 .css - Style</option>' +
+                            '<option value="js">🟨 .js - JavaScript</option>' +
+                            '<option value="ts">🟦 .ts - TypeScript</option>' +
+                            '<option value="py">🐍 .py - Python</option>' +
                         '</select>' +
                         '<input id="swal-input" class="swal2-input" placeholder="filename">',
                     focusConfirm: false,
+                    draggable: true,
                     preConfirm: () => {
                         return [
                         document.getElementById('swal-select').value,
@@ -223,7 +281,7 @@ export class FileExplorer {
                 }).then((result) => {
                     if (result.value) {
                         const [selection, text] = result.value;
-                        this.addFile(this.root, text, selection);
+                        this.addFile(folder, text, selection);
                     }
                 })
             },
@@ -232,6 +290,7 @@ export class FileExplorer {
                     input: 'text',
                     showCancelButton: true,
                     confirmButtonText: 'Rename',
+                    draggable: true,
                     preConfirm: (name) => {
                         if (name) {
                             this.rename(folder, name);
@@ -242,6 +301,17 @@ export class FileExplorer {
         ]);
 
         this.openMenu(e, menu);
+
+        const closeMenu = () => {
+            menu.remove();
+            document.removeEventListener("click", closeMenu);
+            document.removeEventListener("contextmenu", closeMenu);
+        };
+
+        setTimeout(() => {
+            document.addEventListener("click", closeMenu);
+            document.addEventListener("contextmenu", closeMenu);
+        });
     }
 
     showFileMenu(e, file) {
@@ -251,6 +321,7 @@ export class FileExplorer {
                     input: 'text',  
                     showCancelButton: true,
                     confirmButtonText: 'Rename',
+                    draggable: true,
                     preConfirm: (name) => {
                         if (name) {
                             this.rename(file, name);
@@ -261,6 +332,7 @@ export class FileExplorer {
                     title: '',
                     showCancelButton: true,
                     confirmButtonText: 'Delete',
+                    draggable: true,
                     preConfirm: (name) => {
                         if (name) {
                             this.delete(file);
@@ -270,6 +342,17 @@ export class FileExplorer {
         ]);
 
         this.openMenu(e, menu);
+
+        const closeMenu = () => {
+            menu.remove();
+            document.removeEventListener("click", closeMenu);
+            document.removeEventListener("contextmenu", closeMenu);
+        };
+
+        setTimeout(() => {
+            document.addEventListener("click", closeMenu);
+            document.addEventListener("contextmenu", closeMenu);
+        });
     }
 
     /* =========================

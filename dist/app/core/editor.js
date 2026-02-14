@@ -11,7 +11,6 @@ import { json } from "@codemirror/lang-json";
 import { markdown } from "@codemirror/lang-markdown";
 import { xml } from "@codemirror/lang-xml";
 import { yaml } from "@codemirror/lang-yaml";
-import { go } from "@codemirror/lang-go";
 
 // VS Code look & feel
 import { vscodeDark } from "@uiw/codemirror-theme-vscode";
@@ -29,10 +28,24 @@ export const languageCompartment = new Compartment();
 
 export function setActiveFile(file) {
   activeFile = file;
+  let navbarFileName = document.getElementById("runlab-navbar-active-file-name")
+  if (navbarFileName) {
+    navbarFileName.textContent = file ? `${file.name}.${file.ext}` : "";
+  }
 }
 
 function getActiveFile() {
   return activeFile;
+}
+
+export function getCurrentCode() {
+  const activeFile = getActiveFile();
+  return activeFile ? activeFile.content : "";
+}
+
+export function getCurrentExtension() {
+  const activeFile = getActiveFile();
+  return activeFile ? activeFile.ext : "";
 }
 
 export function languageFromExtension(ext) {
@@ -48,11 +61,10 @@ export function languageFromExtension(ext) {
     case "css":return css();
     case "js":return javascript({ typescript: false });
     case "ts":return javascript({ typescript: true });
-    case "go":return go();
+    case "lua":return [];
     default:return [];
   }
 }
-
 
 export function createEditor(parentId, initialCode = "") {
   const parent = document.getElementById(parentId);
