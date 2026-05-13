@@ -1,5 +1,6 @@
 import { generateContainer } from "./app/app.js";
 import { appendViewContent } from "./app/app.js";
+import { ReactRunlabButton } from "./reactButton.jsx";
 
 let runtimeUrl = "";
 function setRuntimeUrl(url) {
@@ -11,11 +12,9 @@ function getRuntimeUrl() {
 
 export async function run({
   parentId,
-  width = 1200,
-  height = 800,
   runtimeUrl = ""
 }) {
-  generateContainer(parentId, width, height);
+  generateContainer(parentId);
   setRuntimeUrl(runtimeUrl);
 }
 
@@ -47,3 +46,7 @@ export async function sendCode(code, ext = "txt") {
     console.error(err);
   }
 }
+
+//=============================== Buttons ===============================
+
+export { ReactRunlabButton };

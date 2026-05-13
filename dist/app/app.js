@@ -3,12 +3,18 @@ import { createNavbar } from "./core/navbar.js";
 import { FileExplorer } from "./fileExplorer/FileExplorer.js";
 import { createTerminal } from "./terminal/terminal.js";
 
-export function generateContainer(parentId,w,h) {
+export function generateContainer(parentId) {
   const container = document.createElement("div");
   container.id = "runlab-container";
   Object.assign(container.style, {
-    width: w + "px",
-    height: h + "px",
+    position: "fixed",
+    inset: "0",
+    left: "0",
+    bottom: "0",
+
+    width: "100vw",
+    height: "100vh",
+
     border: "1px solid #000",
     display: "flex",
     justifyContent: "center",
@@ -16,7 +22,7 @@ export function generateContainer(parentId,w,h) {
     overflow: "hidden"
   });
   document.getElementById(parentId).appendChild(container);
-  gridTemplate("runlab-container", w, h);
+  gridTemplate("runlab-container");
   createEditor("runlab-editor","");
 
   // View and Editor toggle
@@ -202,7 +208,7 @@ export function setEditorActive(status = true){
   //================================ SVG Warning Text ================================
 
   const warningText = document.createElement("p");
-  warningText.textContent = "No file selected.";
+  warningText.textContent = "No files selected.";
   warningText.style.color = "#aaa";
   warningText.style.fontSize = "0.9em";
   warningText.style.margin = "0";

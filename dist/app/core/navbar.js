@@ -34,7 +34,7 @@ export function createNavbar(parentId) {
     });
     ul.appendChild(leftGroup);
 
-    const menuItems = ["Run", "Help"];
+    const menuItems = ["✕", "🗗","Run", "Help"];
     menuItems.forEach(item => {
         const li = document.createElement("li");
         li.textContent = item;
@@ -46,6 +46,36 @@ export function createNavbar(parentId) {
             cursor: "pointer",
             color: "#fff"
         });
+        if (item === "✕") {
+            li.addEventListener("click", () => {
+                const app = document.getElementById("runlab-custom-div");
+                app.style.display = "none";
+                document.getElementById("runlab-custom-btn").textContent = "Show App";
+            });
+        }
+        if (item === "🗗"){
+            li.addEventListener("click", () => {
+                const container = document.getElementById("runlab-container");
+                let isMaximized = container.style.height === "100vh"? false: true;
+
+                if(isMaximized){
+                    container.style.height = "100vh";
+                    container.style.width = "100vw";
+                    container.style.left = "0";
+                    container.style.top = "0";
+                    container.style.bottom = "0";
+                    container.style.transform = "none";
+                }
+                if(!isMaximized){
+                    container.style.height = "70vh";
+                    container.style.width = "70vw";
+                    container.style.left = "50%";
+                    container.style.top = "auto";
+                    container.style.bottom = "0";
+                    container.style.transform = "translateX(-50%)";
+                }
+            });
+        }
         if (item === "Run") {
             li.addEventListener("click", () => {
                 sendCode(getCurrentCode(),getCurrentExtension());
