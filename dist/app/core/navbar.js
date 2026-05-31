@@ -103,6 +103,8 @@ export function createNavbar(parentId) {
                         <li><span style="font-weight: bold;">pwd</span>: Print current directory</li>
                         <li><span style="font-weight: bold;">run</span>: Run a file (e.g., run script.js)</li>
                         <li><span style="font-weight: bold;">help | h</span>: Show help message</li>
+                        <li><span style="font-weight: bold;">mv</span>: Move a file or folder (e.g., mv <source> <destination>)</li>
+                        <li>If the path starts with / it will be considered absolute (from root), otherwise it will be considered relative to the current path.</li>
                     </ul>
                     `,
                     width: 700,

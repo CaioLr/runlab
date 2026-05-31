@@ -1,4 +1,4 @@
-import {print, handleLS, handleClear, handleChangeDirectory, handleRun} from "./commands.js"
+import {print, handleLS, handleClear, handleChangeDirectory, handleRun, handleMove} from "./commands.js"
 
 export let currentDirNode = null
 export let currentPath = []
@@ -120,7 +120,13 @@ function handleCommand(cmd) {
         print("- pwd: Print current directory")
         print("- run: Run a file (e.g., run script.js)")
         print("- help | h: Show this help message")
-    } else if (trimmed !== "") {
+        print("- mv: Move a file or folder (e.g., mv <source> <destination>)")
+        print("  If the path starts with / it will be considered absolute (from root), otherwise it will be considered relative to the current path.")
+
+    } else if (split[0] === "mv") { 
+        handleMove(trimmed)
+
+    }else if (trimmed !== "") {
         print(`command not found: ${trimmed}`)
     }
 }

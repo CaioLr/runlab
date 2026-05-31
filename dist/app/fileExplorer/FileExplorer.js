@@ -42,6 +42,106 @@ export class FileExplorer {
         this.execFiles = files;
     }
 
+    getNodeFromPath(path, currentPath) {
+        
+        if (path === "/") {
+            return this.root;
+        }
+
+        if (path.includes("..")) {
+            return null;
+        }
+        // Absolute path
+        if (path.startsWith("/")) {
+            path = path.slice(1);
+            let currentNode = this.root;
+
+            if (!path.includes("/")) {
+                if (path.includes(".")) { //File
+                    const [name, ext] = path.split(".");
+                    return currentNode.children.find(c => c.name === name && c.ext === ext);
+                }
+                return currentNode.children.find(c => c.name === path);//Folder
+            }
+
+            let pathList = path.split("/").filter(p => p);
+    
+            for (let i = 0; i < pathList.length; i++) {
+                const part = pathList[i];
+    
+                if (part.includes(".")) {
+                    const [name, ext] = part.split(".");
+                    const nextNode = currentNode.children.find(c => c.name === name && c.ext === ext);
+                    if (!nextNode) return null;
+                    currentNode = nextNode;
+                }
+    
+                if (!part.includes(".")) {
+                    const nextNode = currentNode.children.find(c => c.name === part && !c.ext);
+                    if (!nextNode) return null;
+                    currentNode = nextNode;
+                }
+                
+            }
+            return currentNode;
+
+        }
+        // Relative path
+        if (!path.startsWith("/")) {
+            let currentNode = this.root;
+
+            if (currentPath.length > 1) {
+                for (let i = 1; i < currentPath.length; i++) {
+                    const part = currentPath[i];
+                    const nextNode = currentNode.children.find(c => c.name === part && !c.ext);
+                    if (!nextNode) return null;
+                    currentNode = nextNode;
+                }
+            }
+
+            if (!path.includes("/")) {
+                if (path.includes(".")) { //File
+                    const [name, ext] = path.split(".");
+                    return currentNode.children.find(c => c.name === name && c.ext === ext);
+                }
+                return currentNode.children.find(c => c.name === path);//Folder
+            }
+
+            let pathList = path.split("/").filter(p => p);
+
+            for (let i = 0; i < pathList.length; i++) {
+                const part = pathList[i];
+                
+                if (part.includes(".")) {
+                    const [name, ext] = part.split(".");
+                    const nextNode = currentNode.children.find(c => c.name === name && c.ext === ext);
+                    if (!nextNode) return null;
+                    currentNode = nextNode;
+                }
+    
+                if (!part.includes(".")) {
+                    const nextNode = currentNode.children.find(c => c.name === part && !c.ext);
+                    if (!nextNode) return null;
+                    currentNode = nextNode;
+                }
+                
+            }
+            return currentNode;
+
+        }
+
+    }
+
+    setMoveNode(node, destNode) {
+        if (node === this.root) return;
+        if (node instanceof File) {
+            this.moveFile(node, destNode);
+        }
+        if (node instanceof Folder) {
+            this.moveFolder(node, destNode);
+        }
+    }
+
     /* =========================
        RENDER
     ========================== */
@@ -165,6 +265,23 @@ export class FileExplorer {
     delete(node) {
         const parent = node.parent;
         parent.children = parent.children.filter(c => c !== node);
+        this.render();
+    }
+
+    moveFile(node, newParent) {
+        const oldParent = node.parent;
+        oldParent.children = oldParent.children.filter(c => c !== node);
+        newParent.children.push(node);
+        node.parent = newParent;
+        this.render();
+    }
+
+    moveFolder(node, newParent) {
+        const oldParent = node.parent;
+        oldParent.children = oldParent.children.filter(c => c !== node);
+        newParent.children.push(node);
+        node.parent = newParent;
+        node.path = [...newParent.path, node.name];
         this.render();
     }
 

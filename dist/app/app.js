@@ -260,3 +260,11 @@ export function getFeExecutables() {
 export function getFileNode(file) {
   return feNode.getFileNode(file);
 }
+
+export function getNodeFromPath(path, currentPath) {
+  return feNode.getNodeFromPath(path, currentPath);
+}
+
+export function setMoveNode(node, destNode) {
+  feNode.setMoveNode(node, destNode);
+}

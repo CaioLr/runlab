@@ -1,6 +1,6 @@
 import { getCurrentDir, getCurrentPath, setCurrentDir, setCurrentPath } from "./terminal.js"
 import { sendCode } from "../../index.js";
-import { setViewActive, getFeExecutables, getFileNode } from "../app.js";
+import { setViewActive, getFeExecutables, getFileNode, getNodeFromPath, setMoveNode } from "../app.js";
 
 export function print(text = "") {
     const div = document.createElement("div")
@@ -114,4 +114,33 @@ export function handleRun(cmd) {
     const fileNode = getFileNode(file)
     sendCode(fileNode.content, fileNode.ext)
     setViewActive(true)
+}
+
+export function handleMove(cmd) {
+
+    if (cmd.split(" ").length !== 3) {
+        print("Invalid move command format! Use: mv <source> <destination>")
+        return
+    }
+
+    const nodePath = cmd.split(" ")[1];
+    const destPath = cmd.split(" ")[2];
+
+    const currentPath = getCurrentPath();
+
+    const node = getNodeFromPath(nodePath, currentPath);
+    const destNode = getNodeFromPath(destPath, currentPath);
+
+    if (!node) {
+        print("File or folder to be moved not found!")
+        return
+    }
+
+    if (!destNode) {
+        print("Folder to move into not found!")
+        return
+    }
+
+    setMoveNode(node, destNode)
+
 }
