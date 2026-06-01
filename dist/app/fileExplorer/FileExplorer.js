@@ -11,6 +11,7 @@ export class FileExplorer {
         this.execFiles = [];
         this.filesPath = [];
         this.path = [];
+        this.currentNodeDragged = null;
         this.render();
     }
 
@@ -161,6 +162,19 @@ export class FileExplorer {
             this.showRootMenu(e);
         };
 
+        rootDiv.addEventListener("dragover", (e) => {
+            rootDiv.style.border = "1px solid #117bd1";
+            e.preventDefault();
+        });
+        rootDiv.addEventListener("dragleave", (e) => {
+            rootDiv.style.border = "none";
+        });
+        rootDiv.addEventListener("drop", (e) => {
+            rootDiv.style.border = "none";
+            e.preventDefault();
+            this.setMoveNode(this.currentNodeDragged, this.root);
+            this.currentNodeDragged = null;
+        });
 
         this.renderFolder(this.root, rootDiv);
 
@@ -170,6 +184,8 @@ export class FileExplorer {
     renderFolder(folder, parentUl) {
         folder.children.forEach(node => {
             if (node instanceof Folder) {
+
+                /* ============ BUTTON =============== */
                 const btn = document.createElement("button");
                 btn.textContent = `📁 ${node.name}`;
                 btn.style.width = "100%";
@@ -180,18 +196,18 @@ export class FileExplorer {
                 btn.style.paddingTop = "8px";
                 btn.style.paddingBottom = "8px";
                 btn.style.cursor = "pointer";
-                
-                
-
-                btn.onmouseover = () => btn.style.backgroundColor = "#555";
-                btn.onmouseout = () => btn.style.backgroundColor = "transparent";
-
+                btn.draggable = true;
+                /* ============ UL =============== */
                 const ul = document.createElement("ul"); 
                 ul.style.display = "none";
                 ul.style.listStyle = "none";
                 ul.style.margin = "0";
                 ul.style.padding = "0 0 0 24px";
-
+                /* ============ DIV =============== */
+                const div = document.createElement("div");
+                /* ============ EVENTS =============== */
+                btn.onmouseover = () => btn.style.backgroundColor = "#555";
+                btn.onmouseout = () => btn.style.backgroundColor = "transparent";
 
                 btn.onclick = () => this.toggle(ul);
                 btn.oncontextmenu = e => {
@@ -200,11 +216,46 @@ export class FileExplorer {
                     this.showFolderMenu(e, node);
                 };
 
-                parentUl.append(btn, ul);
+                btn.addEventListener("dragstart", (e) => {
+
+                    this.currentNodeDragged = node;
+                });
+                btn.addEventListener("dragover", (e) => {
+                    div.style.border = "1px solid #117bd1";
+                    e.preventDefault();
+                });
+                btn.addEventListener("dragleave", (e) => {
+                    div.style.border = "none";
+                });
+                btn.addEventListener("drop", (e) => {
+                    div.style.border = "none";
+                    e.preventDefault();
+                    this.setMoveNode(this.currentNodeDragged, node);
+                    this.currentNodeDragged = null;
+                });
+
+                ul.addEventListener("dragover", (e) => {
+                    div.style.border = "1px solid #117bd1";
+                    e.preventDefault();
+                });
+                ul.addEventListener("dragleave", (e) => {
+                    div.style.border = "none";
+                });
+                ul.addEventListener("drop", (e) => {
+                    div.style.border = "none";
+                    e.preventDefault();
+                    this.setMoveNode(this.currentNodeDragged, node);
+                    this.currentNodeDragged = null;
+                });
+
+                /* ============ APPEND =============== */
+                div.append(btn, ul);
+                parentUl.append(div);
                 this.renderFolder(node, ul);
             }
 
             if (node instanceof File) {
+                /* ============ LI =============== */
                 const li = document.createElement("li");
                 li.textContent = `📄 ${node.name}.${node.ext}`;
                 li.style.width = "100%";
@@ -215,8 +266,8 @@ export class FileExplorer {
                 li.style.paddingTop = "8px";
                 li.style.paddingBottom = "8px";
                 li.style.cursor = "pointer";
-                
-
+                li.draggable = true;
+                /* ============ EVENTS =============== */
                 li.onclick = () => {
                     setActiveFile(node);
                     setViewActive(false);
@@ -230,6 +281,23 @@ export class FileExplorer {
                     this.showFileMenu(e, node);
                 };
 
+                li.addEventListener("dragstart", (e) => {
+                    this.currentNodeDragged = node;
+                });
+                li.addEventListener("dragover", (e) => {
+                    parentUl.parentElement.style.border = "1px solid #117bd1";
+                    e.preventDefault();
+                });
+                li.addEventListener("dragleave", (e) => {
+                    parentUl.parentElement.style.border = "none";
+                });
+                li.addEventListener("drop", (e) => {
+                    parentUl.parentElement.style.border = "none";
+                    e.preventDefault();
+                    this.setMoveNode(this.currentNodeDragged, node.parent);
+                    this.currentNodeDragged = null;
+                });
+                /* ============ APPEND =============== */
                 parentUl.appendChild(li);
                 this.filesPath.push({ name: `${node.name}.${node.ext}`, path: node.parent.path });
 
@@ -269,6 +337,9 @@ export class FileExplorer {
     }
 
     moveFile(node, newParent) {
+        if (newParent === node) return;
+        if (newParent instanceof File) return;
+        if (node === this.root) return;
         const oldParent = node.parent;
         oldParent.children = oldParent.children.filter(c => c !== node);
         newParent.children.push(node);
@@ -277,6 +348,9 @@ export class FileExplorer {
     }
 
     moveFolder(node, newParent) {
+        if (newParent === node) return;
+        if (newParent instanceof File) return;
+        if (node === this.root) return;
         const oldParent = node.parent;
         oldParent.children = oldParent.children.filter(c => c !== node);
         newParent.children.push(node);
