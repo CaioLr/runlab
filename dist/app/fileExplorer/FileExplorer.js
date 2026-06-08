@@ -3,6 +3,7 @@ import { File } from "./File.js";
 import { updateEditorContentById, setActiveFile } from "../core/editor.js";
 import Swal from "sweetalert2";
 import { setEditorActive, setViewActive } from "../app.js";
+import { standardFileIcon, jsonIcon, htmlIcon, cssIcon, javascriptIcon, typescriptIcon, pythonIcon } from "../assets/fileIconSvg.js";
 
 export class FileExplorer {
     constructor(parentId) {
@@ -257,7 +258,22 @@ export class FileExplorer {
             if (node instanceof File) {
                 /* ============ LI =============== */
                 const li = document.createElement("li");
-                li.textContent = `📄 ${node.name}.${node.ext}`;
+                const icon = this.getSvgIcon(node.ext);
+                li.innerHTML = `
+                <div style="display:flex; align-items:center; gap:4px;">
+                    <div style="
+                        width:16px;
+                        height:16px;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        flex-shrink:0;
+                    ">
+                        ${icon}
+                    </div>
+                    <span>${node.name}.${node.ext}</span>
+                </div>
+                `;
                 li.style.width = "100%";
                 li.style.textAlign = "left";
                 li.style.border = "none";
@@ -265,6 +281,7 @@ export class FileExplorer {
                 li.style.color = "white";
                 li.style.paddingTop = "8px";
                 li.style.paddingBottom = "8px";
+                li.style.paddingLeft = "8px";
                 li.style.cursor = "pointer";
                 li.draggable = true;
                 /* ============ EVENTS =============== */
@@ -592,5 +609,24 @@ export class FileExplorer {
         menu.style.left = `${e.clientX}px`;
 
         document.body.appendChild(menu);
+    }
+
+    getSvgIcon(ext) {
+        switch (ext) {
+            case 'json':
+                return jsonIcon;
+            case 'html':
+                return htmlIcon;
+            case 'css':
+                return cssIcon;
+            case 'js':
+                return javascriptIcon;
+            case 'ts':
+                return typescriptIcon;
+            case 'py':
+                return pythonIcon;
+            default:
+                return standardFileIcon;
+        }
     }
 }

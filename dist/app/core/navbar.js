@@ -1,6 +1,7 @@
 import { sendCode } from "../../index.js";
 import { setViewActive } from "../app.js";
 import { getCurrentCode, getCurrentExtension } from "./editor.js";
+import { closeIcon, minimizeIcon, runIcon, helpIcon } from "../assets/navbarIconSvg.js";
 import Swal from "sweetalert2";
 
 export function createNavbar(parentId) {
@@ -34,11 +35,9 @@ export function createNavbar(parentId) {
     });
     ul.appendChild(leftGroup);
 
-    const menuItems = ["✕", "🗗","Run", "Help"];
+    const menuItems = ["close", "minimize","help", "run"];
     menuItems.forEach(item => {
         const li = document.createElement("li");
-        li.textContent = item;
-
         Object.assign(li.style, {
             marginRight: "15px",
             marginLeft: "15px",
@@ -46,14 +45,16 @@ export function createNavbar(parentId) {
             cursor: "pointer",
             color: "#fff"
         });
-        if (item === "✕") {
+        if (item === "close") {
+            li.innerHTML = closeIcon;
             li.addEventListener("click", () => {
                 const app = document.getElementById("runlab-custom-div");
                 app.style.display = "none";
                 document.getElementById("runlab-custom-btn").textContent = "Show App";
             });
         }
-        if (item === "🗗"){
+        if (item === "minimize") {
+            li.innerHTML = minimizeIcon;
             li.addEventListener("click", () => {
                 const container = document.getElementById("runlab-container");
                 let isMaximized = container.style.height === "100vh"? false: true;
@@ -76,13 +77,15 @@ export function createNavbar(parentId) {
                 }
             });
         }
-        if (item === "Run") {
+        if (item === "run") {
+            li.innerHTML = runIcon;
             li.addEventListener("click", () => {
                 sendCode(getCurrentCode(),getCurrentExtension());
                 setViewActive(true);
             });
         }
-        if (item === "Help") {
+        if (item === "help") {
+            li.innerHTML = helpIcon;
             li.addEventListener("click", () => {
                 Swal.fire({
                     title: "RunLab Help",
@@ -129,7 +132,8 @@ export function createNavbar(parentId) {
         padding: "10px 14px",
         fontWeight: "600",
         color: "#FFDE21",
-        whiteSpace: "nowrap"
+        whiteSpace: "nowrap",
+        letterSpacing: "2px",
     });
 
     ul.appendChild(activeFileName);
@@ -144,6 +148,7 @@ export function createNavbar(parentId) {
     const toggle = document.createElement("div");
     Object.assign(toggle.style, {
         display: "grid",
+        padding: "2px",
         gridTemplateColumns: "1fr 1fr",
         width: "180px",
         height: "28px",

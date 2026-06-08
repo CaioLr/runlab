@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { run } from "./index.js";
+import { run } from "../index.js";
 
 export function ReactRunlabButton(props = { runConfig: {} }) {
   const { runConfig } = props;

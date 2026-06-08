@@ -151,12 +151,14 @@ export function setViewActive(status = false){
   if(status){
     document.getElementById("runlab-view").style.display = "block";
     viewBtn.style.background = "#303030";
+    viewBtn.style.borderRadius = "8px";
     viewBtn.style.color = "#fff";
   }
 
   if (!status){
     document.getElementById("runlab-view").style.display = "none";
     editorBtn.style.background = "#303030";
+    editorBtn.style.borderRadius = "8px";
     editorBtn.style.color = "#fff";
   }
 }

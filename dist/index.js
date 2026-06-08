@@ -1,6 +1,6 @@
 import { generateContainer } from "./app/app.js";
 import { appendViewContent } from "./app/app.js";
-import { ReactRunlabButton } from "./reactButton.jsx";
+import { ReactRunlabButton } from "./installButtons/reactButton.jsx";
 
 let runtimeUrl = "";
 function setRuntimeUrl(url) {
