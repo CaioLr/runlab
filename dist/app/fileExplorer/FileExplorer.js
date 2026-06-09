@@ -164,14 +164,17 @@ export class FileExplorer {
         };
 
         rootDiv.addEventListener("dragover", (e) => {
-            rootDiv.style.border = "1px solid #117bd1";
+            if (e.target !== rootDiv) {
+                return;
+            }
+            rootDiv.style.backgroundColor = "#084475a4";
             e.preventDefault();
         });
         rootDiv.addEventListener("dragleave", (e) => {
-            rootDiv.style.border = "none";
+            rootDiv.style.backgroundColor = "transparent";
         });
         rootDiv.addEventListener("drop", (e) => {
-            rootDiv.style.border = "none";
+            rootDiv.style.backgroundColor = "transparent";
             e.preventDefault();
             this.setMoveNode(this.currentNodeDragged, this.root);
             this.currentNodeDragged = null;
@@ -222,28 +225,34 @@ export class FileExplorer {
                     this.currentNodeDragged = node;
                 });
                 btn.addEventListener("dragover", (e) => {
-                    div.style.border = "1px solid #117bd1";
+                    if (e.target !== btn) {
+                        return;
+                    }
+                    div.style.backgroundColor = "#084475a4";
                     e.preventDefault();
                 });
                 btn.addEventListener("dragleave", (e) => {
-                    div.style.border = "none";
+                    div.style.backgroundColor = "transparent";
                 });
                 btn.addEventListener("drop", (e) => {
-                    div.style.border = "none";
+                    div.style.backgroundColor = "transparent";
                     e.preventDefault();
                     this.setMoveNode(this.currentNodeDragged, node);
                     this.currentNodeDragged = null;
                 });
 
                 ul.addEventListener("dragover", (e) => {
-                    div.style.border = "1px solid #117bd1";
+                    if (e.target !== ul) {
+                        return;
+                    }
+                    div.style.backgroundColor = "#084475a4";
                     e.preventDefault();
                 });
                 ul.addEventListener("dragleave", (e) => {
-                    div.style.border = "none";
+                    div.style.backgroundColor = "transparent";
                 });
                 ul.addEventListener("drop", (e) => {
-                    div.style.border = "none";
+                    div.style.backgroundColor = "transparent";
                     e.preventDefault();
                     this.setMoveNode(this.currentNodeDragged, node);
                     this.currentNodeDragged = null;
@@ -302,14 +311,17 @@ export class FileExplorer {
                     this.currentNodeDragged = node;
                 });
                 li.addEventListener("dragover", (e) => {
-                    parentUl.parentElement.style.border = "1px solid #117bd1";
+                    if (e.target !== li) {
+                        return;
+                    }
+                    parentUl.parentElement.style.backgroundColor = "#084475a4";
                     e.preventDefault();
                 });
                 li.addEventListener("dragleave", (e) => {
-                    parentUl.parentElement.style.border = "none";
+                    parentUl.parentElement.style.backgroundColor = "transparent";
                 });
                 li.addEventListener("drop", (e) => {
-                    parentUl.parentElement.style.border = "none";
+                    parentUl.parentElement.style.backgroundColor = "transparent";
                     e.preventDefault();
                     this.setMoveNode(this.currentNodeDragged, node.parent);
                     this.currentNodeDragged = null;
