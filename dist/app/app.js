@@ -2,6 +2,7 @@ import { createEditor } from "./core/editor.js";
 import { createNavbar } from "./core/navbar.js";
 import { FileExplorer } from "./fileExplorer/FileExplorer.js";
 import { createTerminal } from "./terminal/terminal.js";
+import { createFooter } from "./core/footer.js";
 
 export function generateContainer(parentId) {
   const container = document.createElement("div");
@@ -24,6 +25,7 @@ export function generateContainer(parentId) {
   document.getElementById(parentId).appendChild(container);
   gridTemplate("runlab-container");
   createEditor("runlab-editor","");
+  createFooter("runlab-footer");
 
   // View and Editor toggle
   const editor = document.getElementById("runlab-editor");
@@ -73,12 +75,11 @@ function gridTemplate(parent) {
     display: 'grid',
     width: "100%",
     height: "100%",
-    gridTemplateColumns: "1fr 4fr",  // coluna esquerda menor
-    gridTemplateRows: "0.15fr 2.5fr 1fr",     // top maior, bottom menor
+    gridTemplateColumns: "1fr 4fr",
+    gridTemplateRows: "0.15fr 2.5fr 0.8fr 0.13fr",
     gap: "2px",
     padding: "2px",
-    boxSizing: "border-box",
-    backgroundColor: "#303030"
+    backgroundColor: "#09090b"
   });
 
   const navbar = document.createElement("div");
@@ -86,7 +87,7 @@ function gridTemplate(parent) {
   Object.assign(navbar.style, {
     gridColumn: "1 / 3",   // ocupa as duas colunas
     gridRow: "1 / 2",      // fica na linha 1
-    border: "1px solid #09090b"
+    backgroundColor: "#303030"
   });
 
   //Left
@@ -95,7 +96,7 @@ function gridTemplate(parent) {
   Object.assign(fileExplorer.style, {
     gridColumn: "1 / 2",
     gridRow: "2 / 4",   // ocupa a linha 2 e 3
-    border: "1px solid #09090b"
+    backgroundColor: "#303030"
   });
 
   //Right Top
@@ -104,10 +105,10 @@ function gridTemplate(parent) {
   Object.assign(editor.style, {
     gridColumn: "2 / 3",
     gridRow: "2 / 3",  // linha logo após a navbar
-    border: "1px solid #09090b",
     width: "100%",
     height: "100%",
-    overflow: "hidden"
+    overflow: "hidden",
+    backgroundColor: "#303030"
   });
 
   // Right Bottom
@@ -115,17 +116,26 @@ function gridTemplate(parent) {
   terminal.id = "runlab-terminal";
   Object.assign(terminal.style, {
     gridColumn: "2 / 3",
-    gridRow: "3 / 4",  // última linha
+    gridRow: "3 / 4",
     width: "100%",
     height: "100%",
     overflow: "hidden",
-    border: "1px solid #09090b"
+    backgroundColor: "#303030"
+  });
+
+  const footer = document.createElement("div");
+  footer.id = "runlab-footer";
+  Object.assign(footer.style, {
+    gridColumn: "1 / 3",
+    gridRow: "4 / 5",
+    backgroundColor: "#303030"
   });
 
   grid.appendChild(navbar);
   grid.appendChild(fileExplorer);
   grid.appendChild(editor);
   grid.appendChild(terminal);
+  grid.appendChild(footer);
   document.getElementById(parent).appendChild(grid);
 }
 

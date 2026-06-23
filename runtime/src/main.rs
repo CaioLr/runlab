@@ -1,11 +1,9 @@
-use axum::http::Method;
-use axum::{Json, Router, routing::post};
+use axum::{Router, extract::{WebSocketUpgrade, ws::{Message, WebSocket}}, response::IntoResponse, routing::{get}, Json};
+use futures_util::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::io::Write;
 use tokio::process::Command;
 use tokio::time::{timeout, Duration};
-use tower_http::cors::{Any, CorsLayer};
 use uuid::Uuid;
 
 #[derive(Deserialize)]
@@ -22,25 +20,18 @@ struct RunResponse {
 }
 
 async fn detect_python() -> Option<String> {
-
-    if Command::new("python3")
-        .arg("--version")
-        .output()
-        .await
-        .is_ok()
-    {
-        return Some("python3".to_string());
+    for cmd in ["python3", "python", "py"] {
+        match Command::new(cmd)
+            .arg("--version")
+            .output()
+            .await
+        {
+            Ok(output) if output.status.success() => {
+                return Some(cmd.to_string());
+            }
+            _ => {}
+        }
     }
-
-    if Command::new("python")
-        .arg("--version")
-        .output()
-        .await
-        .is_ok()
-    {
-        return Some("python".to_string());
-    }
-
 
     None
 }
@@ -59,12 +50,12 @@ async fn run_code(Json(payload): Json<RunRequest>) -> Json<RunResponse> {
         });
     }
 
-    let python_cmd = detect_python().await;
-
     let mut cmd = match payload.ext.as_str() {
         "js" => Command::new("node"),
         "ts" => Command::new("ts-node"),
         "py" => {
+            let python_cmd = detect_python().await;
+
             if let Some(py) = python_cmd {
                 Command::new(py)
             } else {
@@ -116,38 +107,43 @@ async fn run_code(Json(payload): Json<RunRequest>) -> Json<RunResponse> {
 
 #[tokio::main]
 async fn main() {
-    eprintln!("[STARTUP] Starting runtime server...");
-    
-    let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods([Method::POST, Method::OPTIONS])
-        .allow_headers(Any);
-    let app = Router::new().route("/", post(run_code)).layer(cors);
-    
-    let addr = "0.0.0.0:8080";
-    eprintln!("[STARTUP] Binding to {}", addr);
-    let listener = match tokio::net::TcpListener::bind(addr).await {
-        Ok(l) => {
-            eprintln!("[STARTUP] Successfully bound to {}", addr);
-            l
-        }
-        Err(e) => {
-            eprintln!("[ERROR] Failed to bind to {}: {}", addr, e);
-            std::process::exit(1);
-        }
-    };
-    
-    eprintln!("[STARTUP] 🚀 Server running on http://0.0.0.0:8080");
-    let _ = std::io::stderr().flush();
-    
-    match axum::serve(listener, app).await {
-        Ok(_) => {
-            eprintln!("[ERROR] Server exited normally (this should not happen)");
-            std::process::exit(1);
-        }
-        Err(e) => {
-            eprintln!("[ERROR] Server error: {}", e);
-            std::process::exit(1);
+    let app = app();
+
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+
+    axum::serve(listener, app).await.unwrap();
+}
+
+
+fn app() -> Router {
+   
+    Router::new()
+        .route("/create", get(create_handler))
+        
+}
+
+async fn create_handler( ws: WebSocketUpgrade) -> impl IntoResponse {
+    ws.on_upgrade(|websocket| handle_websocket(websocket))
+}
+
+async fn handle_websocket(websocket: WebSocket) {
+    let (mut sender, mut receiver) = websocket.split();
+
+    while let Some(msg) = receiver.next().await {
+        if let Ok(Message::Text(text)) = msg {
+
+            let request: RunRequest = serde_json::from_str(&text)
+                .unwrap();
+
+            let response = run_code(Json(request)).await;
+
+            let json_response = serde_json::to_string(&response.0)
+                .unwrap();
+
+            sender
+                .send(Message::Text(json_response.into()))
+                .await
+                .unwrap();
         }
     }
 }
