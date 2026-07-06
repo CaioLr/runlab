@@ -1,22 +1,15 @@
-use axum::{Json};
-use serde::{Deserialize, Serialize};
+
+use axum::{Json, extract::{ws::{Message, WebSocket}}};
+use tokio::sync::Mutex;use std::sync::Arc;
+use futures::{
+    stream::SplitSink
+};
 use std::fs;
 use tokio::process::Command;
 use tokio::time::{timeout, Duration};
 use uuid::Uuid;
 
-#[derive(Deserialize)]
-pub struct RunRequest {
-    code: String,
-    ext: String,
-}
-
-#[derive(Serialize)]
-pub struct RunResponse {
-    stdout: String,
-    stderr: String,
-    success: bool,
-}
+use crate::websocket::{IS_EXECUTING, WsMessage, WsMessageResponse, ws_send_message};
 
 async fn detect_python() -> Option<String> {
     for cmd in ["python3", "python", "py"] {
@@ -35,21 +28,29 @@ async fn detect_python() -> Option<String> {
     None
 }
 
-pub async fn run_code(Json(payload): Json<RunRequest>) -> Json<RunResponse> {
+pub async fn run_code(
+    Json(payload): Json<WsMessage>,
+    sender_clone: &Arc<Mutex<SplitSink<WebSocket, Message>>>
+) {
+    println!("Running the final code...");
+
     let id = Uuid::new_v4();
 
     let temp_dir = std::env::temp_dir();
-    let filename = temp_dir.join(format!("{}.{}", id, &payload.ext));
+    let filename = temp_dir.join(format!("{}.{}", id, &payload.payload[0].ext));
 
-    if let Err(e) = fs::write(&filename, payload.code) {
-        return Json(RunResponse {
+    if let Err(e) = fs::write(&filename, payload.payload[0].code.clone()) {
+        ws_send_message(WsMessageResponse {
+            kind: payload.kind.clone(),
             stdout: "".into(),
             stderr: e.to_string(),
+            path: Vec::new(),
             success: false,
-        });
+        }, sender_clone.clone()).await;
+        return;
     }
 
-    let mut cmd = match payload.ext.as_str() {
+    let mut cmd = match payload.payload[0].ext.as_str() {
         "js" => Command::new("node"),
         "ts" => Command::new("ts-node"),
         "py" => {
@@ -58,19 +59,25 @@ pub async fn run_code(Json(payload): Json<RunRequest>) -> Json<RunResponse> {
             if let Some(py) = python_cmd {
                 Command::new(py)
             } else {
-                return Json(RunResponse {
+                ws_send_message(WsMessageResponse {
+                    kind: "execution_response".into(),
                     stdout: "".into(),
                     stderr: "Python not found on system".into(),
+                    path: Vec::new(),
                     success: false,
-                });
+                }, sender_clone.clone()).await;
+                return;
             }
         }
         _ => {
-            return Json(RunResponse {
+            ws_send_message(WsMessageResponse {
+                kind: "execution_response".into(),
                 stdout: "".into(),
-                stderr: format!("Unsupported extension: {}", payload.ext),
+                stderr: format!("Unsupported extension: {}", payload.payload[0].ext),
+                path: Vec::new(),
                 success: false,
-            });
+            }, sender_clone.clone()).await;
+            return;
         }
     };
 
@@ -81,24 +88,45 @@ pub async fn run_code(Json(payload): Json<RunRequest>) -> Json<RunResponse> {
     let output = match timed {
         Ok(res) => res,
         Err(_) => {
-            return Json(RunResponse {
+            ws_send_message(WsMessageResponse {
+                kind: "execution_response".into(),
                 stdout: "".into(),
                 stderr: "Execution timed out".into(),
+                path: Vec::new(),
                 success: false,
-            })
+            }, sender_clone.clone()).await;
+            return;
         }
     };
 
+    IS_EXECUTING.store(false, std::sync::atomic::Ordering::SeqCst);
+    println!("Execution finished for file: {:?}", filename);
+
     match output {
-        Ok(out) => Json(RunResponse {
-            stdout: String::from_utf8_lossy(&out.stdout).to_string(),
-            stderr: String::from_utf8_lossy(&out.stderr).to_string(),
-            success: out.status.success(),
-        }),
-        Err(e) => Json(RunResponse {
-            stdout: "".into(),
-            stderr: e.to_string(),
-            success: false,
-        }),
+        Ok(out) => {
+            ws_send_message(
+                WsMessageResponse {
+                    kind: "execution_response".into(),
+                    stdout: String::from_utf8_lossy(&out.stdout).to_string(),
+                    stderr: String::from_utf8_lossy(&out.stderr).to_string(),
+                    path: Vec::new(),
+                    success: out.status.success(),
+                },
+                sender_clone.clone()
+            ).await;
+        }
+        Err(e) => {
+            ws_send_message(
+                WsMessageResponse {
+                    kind: "execution_response".into(),
+                    stdout: "".into(),
+                    stderr: e.to_string(),
+                    path: Vec::new(),
+                    success: false,
+                },
+                sender_clone.clone()
+            ).await;
+        }
     }
+
 }

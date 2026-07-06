@@ -101,7 +101,7 @@ export async function sendCode(code, ext = "txt") {
 
   const runnableExtensions = ["js", "ts", "py"];
   if (!runnableExtensions.includes(ext)) {
-    appendViewContent(code);
+    appendViewContent(code); 
     return;
   }
 
@@ -110,7 +110,15 @@ export async function sendCode(code, ext = "txt") {
     if (!ws || ws.readyState !== WebSocket.OPEN) {
       throw new Error("WebSocket is not connected");
     }
-    ws.send(JSON.stringify({ code, ext }));
+    ws.send(
+      JSON.stringify({
+        "kind":"execution_request",
+        "payload":[{ 
+          "code":code,
+          "ext":ext 
+        }]
+      })
+    ); 
 
   } catch (err) {
    console.error(err);

@@ -2,10 +2,10 @@ pub mod executor;
 pub mod bundler;
 
 pub use executor::{
-    run_code,
-    RunRequest
+    run_code
 };
 
-// pub use bundler::{
-
-// };
+pub use bundler::{
+    handle_blunder,
+    handle_received_files
+};
