@@ -1,6 +1,5 @@
 import { generateContainer } from "./app/app.js";
 import { appendViewContent } from "./app/app.js";
-import { ReactRunlabButton } from "./installButtons/reactButton.jsx";
 import {updateConnectionStatus} from "./app/core/footer.js";
 import { getNodeFromPath} from "./app/app.js";
 
@@ -177,7 +176,3 @@ export async function sendCode(code, path, ext = "txt") {
    console.error(err);
   }
 }
-
-//=============================== Buttons ===============================
-
-export { ReactRunlabButton };

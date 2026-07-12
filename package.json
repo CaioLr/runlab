@@ -4,36 +4,44 @@
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
-
   "exports": {
-    ".": "./dist/index.js"
+    ".": "./dist/index.js",
+    "./react": "./dist/installButtons/react.js",
+    "./vue": "./dist/installButtons/vue.js"
   },
-
-  "files": ["dist/**/*", "LICENSE"],
-
+  "files": [
+    "dist/**/*",
+    "LICENSE"
+  ],
   "peerDependencies": {
-    "@codemirror/state": "^6",
-    "@codemirror/view": "^6",
-    "@codemirror/language": "^6",
     "@codemirror/autocomplete": "^6",
-
-    "@codemirror/lang-javascript": "^6",
-    "@codemirror/lang-html": "^6",
     "@codemirror/lang-css": "^6",
+    "@codemirror/lang-html": "^6",
+    "@codemirror/lang-javascript": "^6",
     "@codemirror/lang-json": "^6",
     "@codemirror/lang-markdown": "^6",
     "@codemirror/lang-xml": "^6",
     "@codemirror/lang-yaml": "^6",
-
-    "@uiw/codemirror-theme-vscode": "^4.21.0",
-    "@replit/codemirror-vscode-keymap": "^6.0.0"
+    "@codemirror/language": "^6",
+    "@codemirror/state": "^6",
+    "@codemirror/view": "^6",
+    "@replit/codemirror-vscode-keymap": "^6.0.0",
+    "@uiw/codemirror-theme-vscode": "^4.21.0"
   },
   "dependencies": {
     "@babel/runtime": "^7.24.0",
     "sweetalert2": "^11.10.0"
   },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    }
+  },
   "devDependencies": {
-    "@uiw/codemirror-theme-vscode": "^4.21.0",
-    "@replit/codemirror-vscode-keymap": "^6.0.0"
+    "@replit/codemirror-vscode-keymap": "^6.0.0",
+    "@uiw/codemirror-theme-vscode": "^4.21.0"
   }
 }
