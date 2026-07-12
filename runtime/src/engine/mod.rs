@@ -1,5 +1,6 @@
 pub mod executor;
 pub mod bundler;
+pub mod dep_resolver;
 
 pub use executor::{
     run_code

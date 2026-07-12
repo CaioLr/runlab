@@ -2,6 +2,7 @@ import { generateContainer } from "./app/app.js";
 import { appendViewContent } from "./app/app.js";
 import { ReactRunlabButton } from "./installButtons/reactButton.jsx";
 import {updateConnectionStatus} from "./app/core/footer.js";
+import { getNodeFromPath} from "./app/app.js";
 
 let ws;
 function setWebSocket(socket) {
@@ -17,6 +18,14 @@ function setRuntimeUrl(url) {
 }
 function getRuntimeUrl() {
   return runtimeUrl;
+}
+
+let currentExecuteFilePath = "";
+function setCurrentExecuteFilePath(path) {
+  currentExecuteFilePath = path;
+}
+function getCurrentExecuteFilePath() {
+  return currentExecuteFilePath;
 }
 
 export async function run({
@@ -60,7 +69,49 @@ async function connectWebSocket(runtimeUrl) {
     ws.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
-      appendViewContent(data.stdout || data.stderr);
+
+      if (data.kind === "execution_response") {
+        if (data.success) {
+          appendViewContent(data.stdout);
+        }
+        if (!data.success) {
+          appendViewContent(data.stderr);
+        }
+      }
+
+      if (data.kind === "file_request") {
+
+        const paths = data.path;
+        let payload = [];
+
+        paths.forEach((path) => {
+          const node = getNodeFromPath(path, getCurrentExecuteFilePath());
+          if (node) {
+            payload.push({
+              code: node.content,
+              ext: node.ext
+            });
+          }
+        });
+
+        try {
+          const ws = getWebSocket();
+          if (!ws || ws.readyState !== WebSocket.OPEN) {
+            throw new Error("WebSocket is not connected");
+          }
+          ws.send(
+            JSON.stringify({
+              "kind":"file_response",
+              "payload":payload
+            })
+          ); 
+
+        } catch (err) {
+        console.error(err);
+        }
+
+      }
+
     } catch (err) {
       console.error("Invalid websocket message:", event.data);
     }
@@ -97,7 +148,9 @@ function handleWebSocketClose() {
   }, 5000);
 }
 
-export async function sendCode(code, ext = "txt") {
+export async function sendCode(code, path, ext = "txt") {
+
+  setCurrentExecuteFilePath(path);
 
   const runnableExtensions = ["js", "ts", "py"];
   if (!runnableExtensions.includes(ext)) {

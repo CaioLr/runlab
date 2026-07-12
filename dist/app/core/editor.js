@@ -48,6 +48,11 @@ export function getCurrentExtension() {
   return activeFile ? activeFile.ext : "";
 }
 
+export function getCurrentFilePath() {
+  const activeFile = getActiveFile();
+  return activeFile ? activeFile.parent.path : "";
+}
+
 export function languageFromExtension(ext) {
   switch (ext) {
     case "txt": return [];

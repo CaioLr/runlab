@@ -41,15 +41,15 @@ export function createFooter(parentId) {
   Object.assign(statusIcon.style, {
     display: "flex",
     alignItems: "center",
-    width: "10px",
-    height: "10px"
+    width: "15px",
+    height: "15px"
   });
   
   const statusText = document.createElement("span");
   statusText.id = "runlab-footer-conn-status-text";
   statusText.textContent = "Trying to connect with runtime...";
   Object.assign(statusText.style, {
-    marginLeft: "10px",
+    marginLeft: "5px",
     marginTop: "0px",
     marginBottom: "0px",
     color: "#fff",

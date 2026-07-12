@@ -7,43 +7,47 @@ use futures::{
 use crate::engine::{
     run_code
 };
-
 use crate::websocket::{WsMessage, PayloadItem, IS_WAITING_FOR_FILES, ws_request_file, FILES_RECEIVED, FILES_FOR_EXECUTION};
 
-// Request files function
-
-
 // Find functions for each language
-async fn handle_find_imports(code: &str, ext: &str) -> Vec<String> {
-    match ext {
-        "js" => js_find(code),
-        "ts" => ts_find(code),
-        "py" => py_find(code),
-        _ => vec![],
-    }
+use crate::engine::dep_resolver::{
+    js_ts_resolver::{js_find, ts_find},
+    py_resolver::py_find
+};
+
+
+async fn handle_find_imports(payload: &Vec<PayloadItem>) -> Vec<String> {
+
+    let mut all_imports = Vec::new();
+
+    for file in payload {
+        let ext = &file.ext;
+
+        let imports = match ext.as_str() {
+            "js" => js_find(&file.code.as_str()).await,
+            "ts" => ts_find(&file.code.as_str()).await,
+            "py" => py_find(&file.code.as_str()).await,
+            _ => vec![],
+        };
+
+        all_imports.extend(imports);
+        
+    };
+
+    println!("Imports found: {:?}", all_imports);
+
+    return all_imports;
+
 }
 
-fn js_find(_code: &str) -> Vec<String> {
-    // procurar imports...
-    vec![]
-}
-
-fn ts_find(_code: &str) -> Vec<String> {
-    // procurar imports...
-    vec![]
-}
-
-fn py_find(_code: &str) -> Vec<String> {
-    // procurar imports...
-    vec![]
-}
 
 
+// ============================== FUNCTIONS ==============================
 // Main blunder function
 pub async fn handle_blunder(input: &WsMessage, sender_clone: &Arc<Mutex<SplitSink<WebSocket, Message>>>){
 
 
-    let imports = handle_find_imports(&input.payload[0].code, &input.payload[0].ext).await;
+    let imports = handle_find_imports(&input.payload).await;
 
     //NO IMPORTS
     if imports.is_empty() {
@@ -61,6 +65,7 @@ pub async fn handle_blunder(input: &WsMessage, sender_clone: &Arc<Mutex<SplitSin
                 &sender_clone
             ).await;
             IS_WAITING_FOR_FILES.store(false, std::sync::atomic::Ordering::SeqCst);
+            FILES_FOR_EXECUTION.lock().await.clear();
             return;
         }
 
@@ -82,14 +87,6 @@ pub async fn handle_blunder(input: &WsMessage, sender_clone: &Arc<Mutex<SplitSin
     }
 
     //WITH IMPORTS
-    for payload_item in &input.payload {
-        let mut files_for_execution = FILES_FOR_EXECUTION.lock().await;
-        files_for_execution.push(PayloadItem {
-            code: payload_item.code.clone(),
-            ext: payload_item.ext.clone()
-        });
-    }
-
     IS_WAITING_FOR_FILES.store(true, std::sync::atomic::Ordering::SeqCst);
  
     ws_request_file(
@@ -122,12 +119,15 @@ pub async fn handle_received_files(sender_clone: &Arc<Mutex<SplitSink<WebSocket,
 async fn handle_files_union() -> PayloadItem {
     let mut combined_code = String::new();
 
-    for file in FILES_FOR_EXECUTION.lock().await.iter() {
+    let ext = FILES_FOR_EXECUTION.lock().await.iter().next().map(|f| f.ext.clone());
+
+    for file in FILES_FOR_EXECUTION.lock().await.iter().rev() {
         combined_code.push_str(&file.code);
         combined_code.push('\n');
     }
 
-    let ext = FILES_FOR_EXECUTION.lock().await.iter().next().map(|f| f.ext.clone());
+    println!("Combined code for execution:\n{}", combined_code);
+
 
     PayloadItem {
         code: combined_code,

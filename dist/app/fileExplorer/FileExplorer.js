@@ -50,9 +50,6 @@ export class FileExplorer {
             return this.root;
         }
 
-        if (path.includes("..")) {
-            return null;
-        }
         // Absolute path
         if (path.startsWith("/")) {
             path = path.slice(1);
@@ -107,6 +104,25 @@ export class FileExplorer {
                     return currentNode.children.find(c => c.name === name && c.ext === ext);
                 }
                 return currentNode.children.find(c => c.name === path);//Folder
+            }
+
+            if(path.includes("../")) {
+                let backwardsCount = path.split("../").length - 1;
+
+                for (let i = 0; i < backwardsCount; i++) {
+                    if (currentNode.parent) {
+                        currentNode = currentNode.parent;
+                    }
+                }
+
+                let newPath = path.split("../").slice(backwardsCount).join("/");
+                if (!newPath.includes("/")) {
+                    if (newPath.includes(".")) { //File
+                        const [name, ext] = newPath.split(".");
+                        return currentNode.children.find(c => c.name === name && c.ext === ext);
+                    }
+                    return currentNode.children.find(c => c.name === newPath);//Folder
+                }
             }
 
             let pathList = path.split("/").filter(p => p);

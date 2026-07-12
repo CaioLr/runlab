@@ -1,6 +1,6 @@
 import { sendCode } from "../../index.js";
 import { setViewActive } from "../app.js";
-import { getCurrentCode, getCurrentExtension } from "./editor.js";
+import { getCurrentCode, getCurrentExtension, getCurrentFilePath } from "./editor.js";
 import { closeIcon, minimizeIcon, runIcon, helpIcon } from "../assets/navbarIconSvg.js";
 import Swal from "sweetalert2";
 
@@ -80,7 +80,7 @@ export function createNavbar(parentId) {
         if (item === "run") {
             li.innerHTML = runIcon;
             li.addEventListener("click", () => {
-                sendCode(getCurrentCode(),getCurrentExtension());
+                sendCode(getCurrentCode(), getCurrentFilePath(), getCurrentExtension());
                 setViewActive(true);
             });
         }

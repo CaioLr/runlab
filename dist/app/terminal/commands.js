@@ -112,7 +112,7 @@ export function handleRun(cmd) {
     }
 
     const fileNode = getFileNode(file)
-    sendCode(fileNode.content, fileNode.ext)
+    sendCode(fileNode.content,fileNode.parent.path, fileNode.ext)
     setViewActive(true)
 }
 

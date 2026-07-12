@@ -82,11 +82,15 @@ async fn handle_websocket(
 
         if message.kind == "execution_request" {
 
-            IS_EXECUTING.store(true, Ordering::SeqCst);
-            println!("New execution request received...");
+            if !IS_EXECUTING.load(Ordering::SeqCst) {
 
-            // send to function in blunder to check imports
-            handle_blunder(&message, &sender_clone).await;
+                IS_EXECUTING.store(true, Ordering::SeqCst);
+                println!("New execution request received...");
+
+                // send to function in blunder to check imports
+                handle_blunder(&message, &sender_clone).await;
+            }
+            
         }
 
         // This function is to receive messages, that were requestes by the blunder
