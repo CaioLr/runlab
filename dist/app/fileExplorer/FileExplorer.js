@@ -16,6 +16,10 @@ export class FileExplorer {
         this.render();
     }
 
+    /* ========================= 
+       GETTERS
+    ========================== */
+
     getRoot() {
         return this.root;
     }
@@ -160,6 +164,25 @@ export class FileExplorer {
         }
     }
 
+    getSvgIcon(ext) {
+        switch (ext) {
+            case 'json':
+                return jsonIcon;
+            case 'html':
+                return htmlIcon;
+            case 'css':
+                return cssIcon;
+            case 'js':
+                return javascriptIcon;
+            case 'ts':
+                return typescriptIcon;
+            case 'py':
+                return pythonIcon;
+            default:
+                return standardFileIcon;
+        }
+    }
+
     /* =========================
        RENDER
     ========================== */
@@ -176,7 +199,7 @@ export class FileExplorer {
 
         rootDiv.oncontextmenu = e => {
             e.preventDefault();
-            this.showRootMenu(e);
+            this.showRootMenu(e, rootDiv);
         };
 
         rootDiv.addEventListener("dragover", (e) => {
@@ -219,7 +242,8 @@ export class FileExplorer {
                 btn.draggable = true;
                 /* ============ UL =============== */
                 const ul = document.createElement("ul"); 
-                ul.style.display = "none";
+                
+                ul.style.display = node.display;
                 ul.style.listStyle = "none";
                 ul.style.margin = "0";
                 ul.style.padding = "0 0 0 24px";
@@ -229,11 +253,11 @@ export class FileExplorer {
                 btn.onmouseover = () => btn.style.backgroundColor = "#555";
                 btn.onmouseout = () => btn.style.backgroundColor = "transparent";
 
-                btn.onclick = () => this.toggle(ul);
+                btn.onclick = () => this.toggle(ul, node);
                 btn.oncontextmenu = e => {
                     e.preventDefault(); 
                     e.stopPropagation();
-                    this.showFolderMenu(e, node);
+                    this.showFolderMenu(e, node, ul);
                 };
 
                 btn.addEventListener("dragstart", (e) => {
@@ -352,8 +376,9 @@ export class FileExplorer {
         this.setExecutables(this.filesPath);
     }
 
-    toggle(el) {
-        el.style.display = el.style.display === "none" ? "block" : "none";
+    toggle(el, node) {
+        node.display = node.display === "none" ? "block" : "none";
+        el.style.display = node.display;
     }
 
     /* =========================
@@ -372,6 +397,12 @@ export class FileExplorer {
 
     rename(node, newName) {
         node.name = newName;
+        this.render();
+    }
+
+    renameFile(node, newName, newExt){
+        node.name = newName;
+        node.ext = newExt;
         this.render();
     }
 
@@ -408,56 +439,84 @@ export class FileExplorer {
        MENUS
     ========================== */
 
-    showRootMenu(e) {
+    showRootMenu(e, rootDiv) {
         const menu = this.createMenu([
             {
                 label: "New Folder",
-                action: () => Swal.fire({
-                    title: 'Folder name',
-                    input: 'text',
-                    showCancelButton: true,
-                    confirmButtonText: 'Create',
-                    draggable: true,
-                    preConfirm: (name) => {
-                        if (name) {
-                            this.addFolder(this.root, name);
+                action: () => {
+                    const li = document.createElement("li");
+                    const input = document.createElement("input");
+                    input.type = "text";
+                    input.placeholder = "";
+                    input.style.width = "90%";
+                    input.style.padding = "4px 8px";
+                    input.style.border = "1px solid #555";
+                    input.style.backgroundColor = "#333";
+                    input.style.color = "white";
+                    input.style.outline = "none";
+
+                    input.addEventListener("keydown", (event) => {
+                        if (event.key === "Enter") {
+                            const value = input.value.trim();
+                            if (value) {
+                                this.addFolder(this.root, value);
+                            }
                         }
-                    }
-                })
+
+                        if (event.key === "Escape") {
+                            this.render();
+                        }
+                    });
+                    input.addEventListener("blur", () => {
+                        this.render();
+                    });
+
+                    li.appendChild(input);
+                    rootDiv.appendChild(li);
+                    input.focus();
+                }
             },
             {
                 label: "New File",
-                action: () => Swal.fire({
-                    title: 'Choose extension and filename',
-                    html:
-                        '<select id="swal-select" class="swal2-input">' +
-                            '<option value="txt">📄 .txt - Text</option>' +
-                            '<option value="md">📝 .md - Text</option>' +
-                            '<option value="json">🧩 .json - Data</option>' +
-                            '<option value="yaml">🧩 .yaml - Data</option>' +
-                            '<option value="toml">🧩 .toml - Data</option>' +
-                            '<option value="html">🌐 .html - Markup</option>' +
-                            '<option value="xml">🌐 .xml - Markup</option>' +
-                            '<option value="css">🎨 .css - Style</option>' +
-                            '<option value="js">🟨 .js - JavaScript</option>' +
-                            '<option value="ts">🟦 .ts - TypeScript</option>' +
-                            '<option value="py">🐍 .py - Python</option>' +
-                        '</select>' +
-                        '<input id="swal-input" class="swal2-input" placeholder="filename">',
-                    focusConfirm: false,
-                    draggable: true,
-                    preConfirm: () => {
-                        return [
-                        document.getElementById('swal-select').value,
-                        document.getElementById('swal-input').value
-                        ];
-                    }
-                }).then((result) => {
-                    if (result.value) {
-                        const [selection, text] = result.value;
-                        this.addFile(this.root, text, selection);
-                    }
-                })
+                action: () => {
+                    const li = document.createElement("li");
+                    const input = document.createElement("input");
+                    input.type = "text";
+                    input.placeholder = "";
+                    input.style.width = "90%";
+                    input.style.padding = "4px 8px";
+                    input.style.border = "1px solid #555";
+                    input.style.backgroundColor = "#333";
+                    input.style.color = "white";
+                    input.style.outline = "none";
+
+                    input.addEventListener("keydown", (event) => {
+                        if (event.key === "Enter") {
+                            const value = input.value.trim();
+                            if (value) {
+                                const [name, ext] =
+                                    value.lastIndexOf(".") !== -1
+                                        ? [
+                                            value.slice(0, value.lastIndexOf(".")),
+                                            value.slice(value.lastIndexOf(".") + 1)
+                                        ]
+                                        : [value, "txt"];
+                                this.addFile(this.root, name, ext || "txt");
+                            }
+                        }
+
+                        if (event.key === "Escape") {
+                            this.render();
+                        }
+                    });
+                    input.addEventListener("blur", () => {
+                        this.render();
+                    });
+
+                    li.appendChild(input);
+                    rootDiv.appendChild(li);
+                    input.focus();
+                }
             }   
         ]);
 
@@ -475,65 +534,123 @@ export class FileExplorer {
         });
     }
 
-    showFolderMenu(e, folder) {
+
+    showFolderMenu(e, folder, ul) {
         const menu = this.createMenu([
-            { label: "New Folder", action: () => Swal.fire({
-                    title: 'Folder name',
-                    input: 'text',
+            { label: "New Folder", action: () => {
+                const li = document.createElement("li");
+                const input = document.createElement("input");
+                input.type = "text";
+                input.placeholder = "";
+                input.style.width = "90%";
+                input.style.padding = "4px 8px";
+                input.style.border = "1px solid #555";
+                input.style.backgroundColor = "#333";
+                input.style.color = "white";
+                input.style.outline = "none";
+
+                input.addEventListener("keydown", (event) => {
+                    if (event.key === "Enter") {
+                        const value = input.value.trim();
+                        if (value) {
+                            this.addFolder(folder, value);
+                        }
+                    }
+
+                    if (event.key === "Escape") {
+                        this.render();
+                    }
+                });
+                input.addEventListener("blur", () => {
+                    this.render();
+                });
+
+                li.appendChild(input);
+                ul.appendChild(li);
+                input.focus();
+            }},
+            { label: "New File", action: () =>  {
+                const li = document.createElement("li");
+                const input = document.createElement("input");
+                input.type = "text";
+                input.placeholder = "";
+                input.style.width = "90%";
+                input.style.padding = "4px 8px";
+                input.style.border = "1px solid #555";
+                input.style.backgroundColor = "#333";
+                input.style.color = "white";
+                input.style.outline = "none";
+
+                input.addEventListener("keydown", (event) => {
+                    if (event.key === "Enter") {
+                        const value = input.value.trim();
+                        if (value) {
+                            const [name, ext] =
+                                value.lastIndexOf(".") !== -1
+                                    ? [
+                                        value.slice(0, value.lastIndexOf(".")),
+                                        value.slice(value.lastIndexOf(".") + 1)
+                                    ]
+                                    : [value, "txt"];
+                            this.addFile(folder, name, ext || "txt");
+                        }
+                    }
+
+                    if (event.key === "Escape") {
+                        this.render();
+                    }
+                });
+                input.addEventListener("blur", () => {
+                    this.render();
+                });
+
+                if (folder.display == "none") {
+                    this.toggle(ul, folder)
+                }
+
+                li.appendChild(input);
+                ul.appendChild(li);
+                input.focus();
+            }},
+            { label: "Rename", action: () => {
+                const input = document.createElement("input");
+                input.type = "text";
+                input.value = `📁 ${folder.name}`;
+                input.style.width = "90%";
+                input.style.padding = "4px 8px";
+                input.style.border = "1px solid #555";
+                input.style.backgroundColor = "#333";
+                input.style.color = "white";
+                input.style.outline = "none";
+
+                input.addEventListener("keydown", (event) => {
+                    if (event.key === "Enter") {
+                        const value = input.value.split("📁 ")[1].trim();
+                        if (value) {
+                            this.rename(folder, value);
+                        }
+                    }
+                    if (event.key === "Escape") {
+                        this.render();
+                    }
+                });
+                input.addEventListener("blur", () => {
+                    this.render();
+                });
+                e.target.replaceWith(input);
+                input.focus();
+            }},
+            { label: "Delete", action: () => Swal.fire({
+                    title: 'Are you sure to delete this folder?',
                     showCancelButton: true,
-                    confirmButtonText: 'Create',
+                    confirmButtonText: 'Delete',
                     draggable: true,
                     preConfirm: (name) => {
                         if (name) {
-                            this.addFolder(folder, name);
+                            this.delete(folder);
                         }
                     }
-            })},
-            { label: "New File", action: () => Swal.fire({
-                    title: 'Choose extension and filename',
-                    html:
-                        '<select id="swal-select" class="swal2-input">' +
-                            '<option value="txt">📄 .txt - Text</option>' +
-                            '<option value="md">📝 .md - Text</option>' +
-                            '<option value="json">🧩 .json - Data</option>' +
-                            '<option value="yaml">🧩 .yaml - Data</option>' +
-                            '<option value="toml">🧩 .toml - Data</option>' +
-                            '<option value="html">🌐 .html - Markup</option>' +
-                            '<option value="xml">🌐 .xml - Markup</option>' +
-                            '<option value="css">🎨 .css - Style</option>' +
-                            '<option value="js">🟨 .js - JavaScript</option>' +
-                            '<option value="ts">🟦 .ts - TypeScript</option>' +
-                            '<option value="py">🐍 .py - Python</option>' +
-                        '</select>' +
-                        '<input id="swal-input" class="swal2-input" placeholder="filename">',
-                    focusConfirm: false,
-                    draggable: true,
-                    preConfirm: () => {
-                        return [
-                        document.getElementById('swal-select').value,
-                        document.getElementById('swal-input').value
-                        ];
-                    }
-                }).then((result) => {
-                    if (result.value) {
-                        const [selection, text] = result.value;
-                        this.addFile(folder, text, selection);
-                    }
-                })
-            },
-            { label: "Rename", action: () => Swal.fire({
-                    title: 'New name',
-                    input: 'text',
-                    showCancelButton: true,
-                    confirmButtonText: 'Rename',
-                    draggable: true,
-                    preConfirm: (name) => {
-                        if (name) {
-                            this.rename(folder, name);
-                        }
-                    }
-            }) },
-            { label: "Delete", action: () => this.delete(folder) }
+            }) }
         ]);
 
         this.openMenu(e, menu);
@@ -552,20 +669,44 @@ export class FileExplorer {
 
     showFileMenu(e, file) {
         const menu = this.createMenu([
-            { label: "Rename", action: () => Swal.fire({
-                    title: 'New name',
-                    input: 'text',  
-                    showCancelButton: true,
-                    confirmButtonText: 'Rename',
-                    draggable: true,
-                    preConfirm: (name) => {
-                        if (name) {
-                            this.rename(file, name);
+            { label: "Rename", action: () => {
+                const input = document.createElement("input");
+                input.type = "text";
+                input.value = `${file.name}.${file.ext}`;
+                input.style.width = "90%";
+                input.style.padding = "4px 8px";
+                input.style.border = "1px solid #555";
+                input.style.backgroundColor = "#333";
+                input.style.color = "white";
+                input.style.outline = "none";
+
+                input.addEventListener("keydown", (event) => {
+                    if (event.key === "Enter") {
+                        const value = input.value.trim();
+                        if (value) {
+                            const [name, ext] =
+                                value.lastIndexOf(".") !== -1
+                                    ? [
+                                        value.slice(0, value.lastIndexOf(".")),
+                                        value.slice(value.lastIndexOf(".") + 1)
+                                    ]
+                                    : [value, "txt"];
+                            this.renameFile(file, name, ext || "txt");
                         }
                     }
-            }) },
+                    if (event.key === "Escape") {
+                        this.render();
+                    }
+                });
+                input.addEventListener("blur", () => {
+                    this.render();
+                });
+                e.target.replaceWith(input);
+                input.focus();
+
+            }},
             { label: "Delete", action: () => Swal.fire({
-                    title: '',
+                    title: 'Are you sure to delete this file?',
                     showCancelButton: true,
                     confirmButtonText: 'Delete',
                     draggable: true,
@@ -637,24 +778,5 @@ export class FileExplorer {
         menu.style.left = `${e.clientX}px`;
 
         document.body.appendChild(menu);
-    }
-
-    getSvgIcon(ext) {
-        switch (ext) {
-            case 'json':
-                return jsonIcon;
-            case 'html':
-                return htmlIcon;
-            case 'css':
-                return cssIcon;
-            case 'js':
-                return javascriptIcon;
-            case 'ts':
-                return typescriptIcon;
-            case 'py':
-                return pythonIcon;
-            default:
-                return standardFileIcon;
-        }
     }
 }

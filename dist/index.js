@@ -2,6 +2,7 @@ import { generateContainer } from "./app/app.js";
 import { appendViewContent } from "./app/app.js";
 import {updateConnectionStatus} from "./app/core/footer.js";
 import { getNodeFromPath} from "./app/app.js";
+import standardConfig from "./standardConfig.json";
 
 let ws;
 function setWebSocket(socket) {
@@ -27,12 +28,23 @@ function getCurrentExecuteFilePath() {
   return currentExecuteFilePath;
 }
 
+let config = null;
+function setConfig(newConfig) {
+  config = newConfig ? newConfig : standardConfig;
+}
+
+function getConfig(){
+  return config
+}
+
 export async function run({
   parentId,
-  runtimeUrl = ""
+  runtimeUrl = "",
+  config = null
 }) {
   generateContainer(parentId);
   setRuntimeUrl(runtimeUrl);
+  setConfig(config);
   try {
     setWebSocket(await connectWebSocket(runtimeUrl));
   } catch {
@@ -151,7 +163,7 @@ export async function sendCode(code, path, ext = "txt") {
 
   setCurrentExecuteFilePath(path);
 
-  const runnableExtensions = ["js", "ts", "py"];
+  const { runnableExtensions } = getConfig();
   if (!runnableExtensions.includes(ext)) {
     appendViewContent(code); 
     return;

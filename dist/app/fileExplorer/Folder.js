@@ -6,6 +6,7 @@ class Folder extends FSNode {
         this.parent = parent;
         this.children = [];
         this.path = parent ? [...parent.path, name] : [name];
+        this.display = "block";
     }
 }
 

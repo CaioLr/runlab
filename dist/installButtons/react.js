@@ -22,11 +22,11 @@ export function ReactRunlabButton(props = { runConfig: {} }) {
 
     if (displayStyle === "none") {
       app.style.display = "block";
-      btn.textContent = "Hide App";
+      btn.textContent = "Hide IDE Environment";
     }
     if (displayStyle === "block") {
       app.style.display = "none";
-      btn.textContent = "Show App";
+      btn.textContent = "Show IDE Environment";
     }
   };
 
@@ -37,7 +37,7 @@ export function ReactRunlabButton(props = { runConfig: {} }) {
         onClick={showApp}
         className="show-app-button"
       >
-        Show App
+        Show IDE Environment
       </button>
 
       <div id="runlab-custom-div" style={{ display: "none" }}></div>

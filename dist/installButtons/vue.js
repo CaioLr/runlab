@@ -22,10 +22,10 @@ export const VueRunlabButton = {
 
         if (displayStyle === "none") {
             app.style.display = "block";
-            btn.textContent = "Hide App";
+            btn.textContent = "Hide IDE Environment";
         } else {
             app.style.display = "none";
-            btn.textContent = "Show App";
+            btn.textContent = "Show IDE Environment";
         }
     }
 
@@ -37,7 +37,7 @@ export const VueRunlabButton = {
             id: "runlab-custom-btn",
             onClick: showApp
           },
-          "Show App"
+          "Show IDE Environment"
         ),
         h("div", {
           id: "runlab-custom-div",

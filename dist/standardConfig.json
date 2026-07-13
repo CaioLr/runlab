@@ -1,0 +1,7 @@
+{
+    "runnableExtensions": [
+        "js",
+        "ts",
+        "py"
+    ]
+}
