@@ -34,8 +34,6 @@ async fn handle_find_imports(payload: &Vec<PayloadItem>) -> Vec<String> {
         
     };
 
-    println!("Imports found: {:?}", all_imports);
-
     return all_imports;
 
 }
@@ -104,14 +102,10 @@ pub async fn handle_received_files(sender_clone: &Arc<Mutex<SplitSink<WebSocket,
         match received.take() {
             Some(msg) => msg,
             None => {
-                println!("Nenhum arquivo recebido.");
                 return;
             }
         }
     };
-
-    println!("Received files...");
-    println!("{:?}", files);
 
     handle_blunder(&files, sender_clone).await;
 }
@@ -125,9 +119,6 @@ async fn handle_files_union() -> PayloadItem {
         combined_code.push_str(&file.code);
         combined_code.push('\n');
     }
-
-    println!("Combined code for execution:\n{}", combined_code);
-
 
     PayloadItem {
         code: combined_code,

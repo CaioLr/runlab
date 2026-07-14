@@ -20,7 +20,6 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     nodejs \
     npm \
-    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 RUN npm install -g typescript

@@ -32,7 +32,6 @@ pub async fn run_code(
     Json(payload): Json<WsMessage>,
     sender_clone: &Arc<Mutex<SplitSink<WebSocket, Message>>>
 ) {
-    println!("Running the final code...");
 
     let id = Uuid::new_v4();
 
@@ -100,7 +99,6 @@ pub async fn run_code(
     };
 
     IS_EXECUTING.store(false, std::sync::atomic::Ordering::SeqCst);
-    println!("Execution finished for file: {:?}", filename);
 
     match output {
         Ok(out) => {
